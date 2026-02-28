@@ -19,6 +19,6 @@ public class ExpenseRequestDTO {
     private BigDecimal amount;
     private String description;
     private LocalDate date;
-    private IncomeExpenseType type;
+    private String type; //IncomeExpenseType enum --> String
     private UUID categoryId;
 }
