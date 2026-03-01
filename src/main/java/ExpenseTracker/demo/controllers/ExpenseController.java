@@ -1,6 +1,7 @@
 package ExpenseTracker.demo.controllers;
 
 import ExpenseTracker.demo.dto.CategoryResponseDTO;
+import ExpenseTracker.demo.dto.ExpenseRequestDTO;
 import ExpenseTracker.demo.dto.ExpenseResponseDTO;
 import ExpenseTracker.demo.dto.PageResponseDTO;
 import ExpenseTracker.demo.entities.Category;
@@ -36,6 +37,18 @@ public class ExpenseController {
 
         return ResponseEntity.ok(PageMapper.toResponse(page));
 
+    }
+
+    @DeleteMapping("/users/{userId}/{expenseId}")
+    public ResponseEntity<Void> deleteExpense(@PathVariable UUID userId, @PathVariable UUID expenseId){
+        expenseService.deleteExpense(userId, expenseId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/users/{userId}/{expenseId}")
+    public ResponseEntity<ExpenseResponseDTO> updateExpense(@PathVariable UUID userId, @PathVariable UUID expenseId, @RequestParam UUID categoryId, @RequestBody ExpenseRequestDTO dto){
+        Expense updated = expenseService.updateExpense(userId, expenseId, categoryId, dto);
+        return ResponseEntity.ok(mapToResponse(updated));
     }
 
     private ExpenseResponseDTO mapToResponse(Expense expense){

@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class ExpenseService {
@@ -76,5 +78,49 @@ public class ExpenseService {
         }
         Specification<Expense> spec = ExpenseSpecification.filterExpenses(userId, categoryId, type, from, to);
         return expenseRepository.findAll(spec, pageable);
+    }
+
+    public void deleteExpense(UUID userId, UUID expenseId){
+        Expense expense = expenseRepository.findById(expenseId).orElseThrow(() -> new RuntimeException("expense not found!"));
+
+        if(!expense.getUser().getId().equals(userId)){
+            throw new RuntimeException("Expense not found for this user");
+        }
+
+        expenseRepository.delete(expense);
+    }
+
+    public Expense updateExpense(UUID userId, UUID expenseId, UUID categoryId, ExpenseRequestDTO expenseRequestDTO){
+       Expense expense = expenseRepository.findById(expenseId).orElseThrow(() -> new RuntimeException("Expense not found!"));
+
+       if(!expense.getUser().getId().equals(userId)){
+           throw new RuntimeException("Expense not found for this user!");
+       }
+
+       Category category = categoryRepository.findByIdAndUser_Id(categoryId, userId).orElseThrow(() -> new RuntimeException("Category not found for this user!"));
+
+       if(expenseRequestDTO.getAmount() != null || expenseRequestDTO.getAmount().compareTo(BigDecimal.ZERO) <= 0){
+           throw new RuntimeException("Amount must greater than zero!");
+       }
+
+       IncomeExpenseType type;
+       try{
+           type = IncomeExpenseType.valueOf(expenseRequestDTO.getType().toUpperCase());
+       } catch (Exception e){
+           throw new RuntimeException("Invalid type. Use INCOME or EXPENSE");
+       }
+
+       if(!category.getIncomeExpenseType().equals(type)){
+           throw new RuntimeException("Expense type does not match any category type!");
+       }
+
+       expense.setAmount(expenseRequestDTO.getAmount());
+       expense.setDescription(expenseRequestDTO.getDescription());
+       expense.setDate(expenseRequestDTO.getDate());
+       expense.setType(type);
+       expense.setCategory(category);
+
+       return expenseRepository.save(expense);
+
     }
 }
